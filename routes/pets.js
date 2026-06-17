@@ -1,23 +1,17 @@
 import express from 'express';
-import fs from 'fs/promises';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { createPet, getMyPets, getPetsForFeed } from '../controllers/petController.js';
+import { protect } from '../middlewares/authMiddleware.js';
+import upload from '../middlewares/uploadMiddleware.js';
 
 const router = express.Router();
 
-router.get('/', async (req, res) => {
-    try {
-        const filePath = path.join(__dirname, '..', 'data', 'pets.json');
-        const data = await fs.readFile(filePath, 'utf8');
-        const pets = JSON.parse(data);
-        res.json(pets.pets);
-    } catch (error) {
-        console.error('Error al leer las mascotas:', error);
-        res.status(500).json({ error: 'No se cargaron las mascotas' });
-    }
-});
+router.use(protect); 
+
+// Ruta para crear mascota y subir a Cloudinary
+router.post('/', upload.array('photos', 3), createPet);
+
+router.get('/my-pets', getMyPets);
+
+router.get('/', getPetsForFeed);
 
 export default router;

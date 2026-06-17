@@ -1,0 +1,36 @@
+### PRUEBAS DEL BACKEND PETIN
+
+
+### 1. Probar que el servidor funciona
+GET http://localhost:3005/
+
+### ---------------------------------------------------------
+### 2. REGISTRAR UN USUARIO DE PRUEBA
+### ---------------------------------------------------------
+POST http://localhost:3005/api/auth/register
+Content-Type: application/json
+
+{
+    "name": "Juan Perez",
+    "email": "juan@gmail.com",
+    "password": "password123",
+    "confirmPassword": "password123"
+}
+
+### ---------------------------------------------------------
+### 3. INICIAR SESIÓN 
+### ---------------------------------------------------------
+# @name login
+POST http://localhost:3005/api/auth/login
+Content-Type: application/json
+
+{
+    "email": "juan@gmail.com",
+    "password": "password123"
+}
+
+### ---------------------------------------------------------
+### 4. VER MI PERFIL SECRETO (Requiere el Token)
+### ---------------------------------------------------------
+GET http://localhost:3005/api/auth/me
+Authorization: Bearer PEGA_TU_TOKEN_AQUI
