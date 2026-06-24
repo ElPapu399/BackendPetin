@@ -4,9 +4,7 @@ import { protect } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
-s
 router.use(protect);
-
 
 router.get('/:roomId', getMessages);
 

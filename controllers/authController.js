@@ -1,32 +1,29 @@
 import User from '../models/User.js';
 import generateToken from '../utils/generateToken.js';
 import { OAuth2Client } from 'google-auth-library';
+import sendEmail from '../utils/sendEmail.js';
 
-// Inicializar el cliente de Google para verificar tokens
+
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // ==========================================
-// CONTROLADOR DE REGISTRO
-// Aquí recibimos los datos del formulario y creamos un nuevo usuario en la BD
+//  REGISTRO
+// un nuevo usuario en la BD
 // ==========================================
 export const registerUser = async (req, res) => {
     const { name, email, password, confirmPassword } = req.body;
 
     try {
-        // Validación básica comprobamos que las contraseñas sean iguales
         if (password !== confirmPassword) {
             return res.status(400).json({ error: 'Las contraseñas no coinciden' });
         }
 
-        // Buscamos en la base de datos si ya hay alguien con ese correo
         const userExists = await User.findOne({ email });
 
         if (userExists) {
-            // Si existe, cortamos el proceso y enviamos un error 400
             return res.status(400).json({ error: 'El usuario ya existe con este correo' });
         }
 
-        // Si todo está bien, procedemos a crear el usuario
         const user = await User.create({
             name,
             email,
@@ -34,14 +31,28 @@ export const registerUser = async (req, res) => {
             authProvider: 'local'
         });
 
-        // Si el usuario se guardó con éxito devolvemos sus datos junto con un token
+        //  generar un OTP
         if (user) {
-            res.status(201).json({
-                _id: user._id,
-                name: user.name,
+            const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+            const otpExpires = new Date();
+            otpExpires.setMinutes(otpExpires.getMinutes() + 10);
+
+            user.otpCode = otpCode;
+            user.otpExpires = otpExpires;
+            await user.save();
+
+            // enviamos el correo OTP
+            const message = `¡Bienvenido a Petin, ${user.name}!\nTu código para verificar tu nueva cuenta es: ${otpCode}\nEste código expirará en 10 minutos.`;
+            await sendEmail({
                 email: user.email,
-                role: user.role,
-                token: generateToken(user._id),
+                subject: 'Petin - Verifica tu cuenta nueva',
+                message: message
+            });
+
+            res.status(201).json({
+                message: 'Usuario creado. Código OTP enviado al correo.',
+                requireOtp: true,
+                email: user.email
             });
         } else {
             res.status(400).json({ error: 'Datos de usuario inválidos' });
@@ -53,29 +64,83 @@ export const registerUser = async (req, res) => {
 };
 
 // ==========================================
-// CONTROLADOR DE LOGIN
-// Verifica las credenciales y devuelve un token si son correctas
+//  LOGIN 
 // ==========================================
 export const loginUser = async (req, res) => {
     const { email, password } = req.body;
 
     try {
-        // Buscamos al usuario por su correo
+        
         const user = await User.findOne({ email });
 
         if (user && (await user.matchPassword(password))) {
-            res.json({
-                _id: user._id,
-                name: user.name,
+       
+            const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+        
+            const otpExpires = new Date();
+            otpExpires.setMinutes(otpExpires.getMinutes() + 10);
+
+  
+            user.otpCode = otpCode;
+            user.otpExpires = otpExpires;
+            await user.save();
+
+            const message = `Tu código de verificación de 2 pasos para Petin es: ${otpCode}\nEste código expirará en 10 minutos.`;
+            await sendEmail({
                 email: user.email,
-                role: user.role,
-                token: generateToken(user._id),
+                subject: 'Petin - Código de Seguridad (OTP)',
+                message: message
+            });
+
+            res.json({
+                message: 'Código OTP enviado al correo',
+                requireOtp: true,
+                email: user.email
             });
         } else {
             res.status(401).json({ error: 'Correo o contraseña incorrectos' });
         }
     } catch (error) {
         res.status(500).json({ error: 'Error en el servidor al iniciar sesión' });
+    }
+};
+
+// ==========================================
+//  VERIFICACIÓN OTP 
+// generar el token JWT
+// ==========================================
+export const verifyOTP = async (req, res) => {
+    const { email, otpCode } = req.body;
+
+    try {
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+
+        if (user.otpCode !== otpCode) {
+            return res.status(401).json({ error: 'Código OTP incorrecto' });
+        }
+
+        if (user.otpExpires < new Date()) {
+            return res.status(401).json({ error: 'El código OTP ha expirado' });
+        }
+
+        user.otpCode = undefined;
+        user.otpExpires = undefined;
+        await user.save();
+
+        res.json({
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            token: generateToken(user._id),
+        });
+
+    } catch (error) {
+        res.status(500).json({ error: 'Error verificando el código OTP' });
     }
 };
 
@@ -117,8 +182,7 @@ export const googleLogin = async (req, res) => {
 };
 
 // ==========================================
-// OBTENER PERFil la ruta protegida
-// Devuelve los datos del usuario que hace la petición
+// OBTENER PERFIl 
 // ==========================================
 export const getUserProfile = async (req, res) => {
     try {

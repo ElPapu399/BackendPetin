@@ -32,14 +32,20 @@ const userSchema = new mongoose.Schema(
             enum: ['local', 'google'],
             default: 'local',
         },
+        otpCode: {
+            type: String, // guardaremos el codigo de 6 dígitos temporalmente
+        },
+        otpExpires: {
+            type: Date, // saber el tiempo 10 min
+        },
     },
     {
-        timestamps: true, //en las columnas de "createdAt" y "updatedAt"
+        timestamps: true, 
     }
 );
 
 // ------------------------------------------
-// MIDDLEWARE DE MONGOOSE antes de guardar
+// ANTES DE GUARDAR EN LA BD
 // ------------------------------------------
 userSchema.pre('save', async function () {
     if (!this.isModified('password') || !this.password) {

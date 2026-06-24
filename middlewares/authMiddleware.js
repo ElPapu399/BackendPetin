@@ -4,7 +4,7 @@ import User from '../models/User.js';
 export const protect = async (req, res, next) => {
     let token;
 
-    // 1. Verificamos si el frontend nos está enviando el token 
+    // verificamos el token del frontend
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
         try {
             token = req.headers.authorization.split(' ')[1];
@@ -23,5 +23,16 @@ export const protect = async (req, res, next) => {
 
     if (!token) {
         res.status(401).json({ error: 'No autorizado, no enviaste un token de seguridad' });
+    }
+};
+
+// ==========================================
+// ADMINISTRADOR
+// ==========================================
+export const adminProtect = (req, res, next) => {
+    if (req.user && req.user.role === 'admin') {
+        next(); // continua con exito gogo
+    } else {
+        res.status(403).json({ error: 'Acceso denegado. No eres administrador.' });
     }
 };

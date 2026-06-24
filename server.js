@@ -10,6 +10,7 @@ import petRoutes from './routes/pets.js';
 import authRoutes from './routes/auth.js';
 import matchRoutes from './routes/matches.js';
 import messageRoutes from './routes/messages.js';
+import adminRoutes from './routes/admin.js';
 
 dotenv.config(); 
 connectDB(); //nos conecta a la base desatos
@@ -40,6 +41,7 @@ app.use('/api/pets', petRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/matches', matchRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/admin', adminRoutes);
 
 // ==========================================
 // CONFIGURACIÓN DE SOCKET.IO 
