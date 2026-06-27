@@ -1,5 +1,5 @@
 import express from 'express';
-import { createPet, getMyPets, getPetsForFeed } from '../controllers/petController.js';
+import { createPet, getMyPets, getPetsForFeed, updatePet } from '../controllers/petController.js';
 import { protect } from '../middlewares/authMiddleware.js';
 import upload from '../middlewares/uploadMiddleware.js';
 
@@ -13,5 +13,7 @@ router.post('/', upload.array('photos', 3), createPet);
 router.get('/my-pets', getMyPets);
 
 router.get('/', getPetsForFeed);
+
+router.put('/:id', upload.array('photos', 3), updatePet);
 
 export default router;
