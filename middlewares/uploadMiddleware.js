@@ -13,6 +13,11 @@ const storage = new CloudinaryStorage({
 });
 
 // Inicializar multer con la configuración de Cloudinary
-const upload = multer({ storage: storage });
+const upload = multer({
+    storage: storage,
+    limits: {
+        fileSize: 5 * 1024 * 1024, // 5MB por imagen
+    },
+});
 
 export default upload;

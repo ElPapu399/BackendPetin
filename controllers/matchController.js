@@ -5,56 +5,70 @@ import Pet from '../models/Pet.js';
 // DAR LIKE O DISLIKE A UNA MASCOTA
 // ==========================================
 export const swipePet = async (req, res) => {
-    const { fromPetId, toPetId, action } = req.body; 
+    const { fromPetId, toPetId, action } = req.body;
+
     try {
         if (!['like', 'dislike'].includes(action)) {
-            return res.status(400).json({ error: 'Acción inválida. Debe ser like o dislike' });
+            return res.status(400).json({ error: 'Accion invalida. Debe ser like o dislike' });
         }
 
-        // guardar la peticion
+        if (!fromPetId || !toPetId) {
+            return res.status(400).json({ error: 'Debes enviar la mascota origen y destino' });
+        }
+
+        if (fromPetId === toPetId) {
+            return res.status(400).json({ error: 'Una mascota no puede interactuar consigo misma' });
+        }
+
+        const fromPet = await Pet.findById(fromPetId);
+        const toPet = await Pet.findById(toPetId);
+
+        if (!fromPet || !toPet) {
+            return res.status(404).json({ error: 'Una de las mascotas no existe' });
+        }
+
+        // El usuario solo puede hacer swipe con una mascota que le pertenece.
+        if (fromPet.owner.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ error: 'No tienes permiso para usar esta mascota' });
+        }
+
+        // Guardar la accion del usuario.
         let newMatch = await Match.create({
             fromPet: fromPetId,
-            toPet: toPetId,     
+            toPet: toPetId,
             status: action
         });
 
-        // logica del Match
+        // Si ambos dieron like, se convierte en match.
         let isMatch = false;
         if (action === 'like') {
-            // buscamos si tenemos un like
             const reverseLike = await Match.findOne({
                 fromPet: toPetId,
                 toPet: fromPetId,
                 status: 'like'
             });
 
-            // si tenemos mach
             if (reverseLike) {
                 isMatch = true;
-                
-                // actualizar el match de cada perfil
+
                 newMatch.status = 'match';
                 await newMatch.save();
 
                 reverseLike.status = 'match';
                 await reverseLike.save();
-                
-                // agregar otras funcionalidades como notificaciones  a tiempo real , etc
             }
         }
 
-        //animacion 
         res.status(201).json({
             message: `Deslizaste a la ${action}`,
-            isMatch, 
+            isMatch,
             matchData: newMatch
         });
-
     } catch (error) {
-
         if (error.code === 11000) {
             return res.status(400).json({ error: 'Ya deslizaste sobre esta mascota antes' });
         }
+
         res.status(500).json({ error: 'Error al procesar el deslizamiento' });
     }
 };
@@ -66,10 +80,20 @@ export const getMyMatches = async (req, res) => {
     const { petId } = req.params;
 
     try {
+        const pet = await Pet.findById(petId);
+
+        if (!pet) {
+            return res.status(404).json({ error: 'Mascota no encontrada' });
+        }
+
+        if (pet.owner.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ error: 'No tienes permiso para ver estos matches' });
+        }
+
         const matches = await Match.find({
             fromPet: petId,
             status: 'match'
-        }).populate('toPet'); 
+        }).populate('toPet');
 
         res.json(matches);
     } catch (error) {

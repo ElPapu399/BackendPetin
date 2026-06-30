@@ -23,6 +23,12 @@ const petSchema = new mongoose.Schema(
         age: {
             type: Number,
             required: [true, 'La edad es obligatoria'],
+            min: [0, 'La edad no puede ser negativa'],
+        },
+        sex: {
+            type: String,
+            enum: ['macho', 'hembra', 'desconocido'],
+            default: 'desconocido',
         },
         description: {
             type: String,
@@ -38,6 +44,11 @@ const petSchema = new mongoose.Schema(
             type: String,
             enum: ['amistad', 'pareja', 'paseos'],
             default: 'amistad'
+        },
+        status: {
+            type: String,
+            enum: ['activo', 'inactivo'],
+            default: 'activo'
         }
     },
     {
