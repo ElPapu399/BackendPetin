@@ -140,3 +140,82 @@ export const updatePet = async (req, res) => {
     res.status(500).json({ error: "Error al actualizar la mascota" });
   }
 };
+
+// ================
+// ELIMINAR MASCOTA
+// ================
+
+export const deletePet = async(req, res) => {
+  try {
+    const pet = await Pet.findById(req.params.id);
+
+    if(!pet) {
+      return res.status(404).json({
+        error: "Mascota no encontrada"
+      });
+    }
+
+    if (pet.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        error: "No tienes permiso para eliminar esta mascota",
+      });
+    }
+
+    console.log("Mascota encontrada: ", pet._id)
+
+    await pet.deleteOne();
+    console.log("Mascota eliminada")
+
+    const existe = await Pet.findById(req.params.id);
+
+    console.log(existe);
+
+    res.json({
+      message: "Mascota eliminada correctamente"
+    });
+  } catch (error) {
+    console.error("DELETE PET ERROR:")
+    console.error(error);
+    res.status(500).json({
+      error: error.message,
+      stack: error.stack,
+    })
+  }
+}
+
+export const addPhotos = async(req, res) => {
+  try {
+    const pet = await Pet.findById(req.params.id);
+    if(!pet) {
+      return res.status(404).json({
+        error: "Mascota no encontrada",
+      });
+    }
+
+    if (pet.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        error: "No tienes permiso para modificar esta mascota",
+      });
+    }
+
+    const newPhotos = req.files.map((file) => file.path);
+
+    if(pet.photos.length + newPhotos.lenght > 4) {
+      return res.status(400).json({
+        error: "Solo puedes tener un máximo de 3 fotos.",
+      });
+    }
+
+    pet.photos.push(...newPhotos);
+
+    await pet.save();
+
+    res.json(pet);
+    
+  } catch(error) {
+    console.error(error);
+    res.status(500).json({
+      error: "Error al agregar fotos",
+    });
+  }
+}

@@ -69,3 +69,21 @@ export const getRecentMatches = async (req, res) => {
         res.status(500).json({ error: 'Error al obtener matches recientes' });
     }
 };
+
+export const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find()
+      .select("-password")
+      .sort({ createdAt: -1 });
+
+    res.json({
+      data: users,
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      error: "Error obteniendo usuarios.",
+    });
+  }
+};
