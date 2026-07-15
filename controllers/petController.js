@@ -219,3 +219,35 @@ export const addPhotos = async(req, res) => {
     });
   }
 }
+
+// ==========================================
+// ELIMINAR UNA FOTO DE LA MASCOTA
+// ==========================================
+export const removePhoto = async (req, res) => {
+  try {
+    const { photoUrl } = req.body;
+
+    if (!photoUrl) {
+      return res.status(400).json({ error: "Falta la foto a eliminar" });
+    }
+
+    const pet = await Pet.findById(req.params.id);
+
+    if (!pet) {
+      return res.status(404).json({ error: "Mascota no encontrada" });
+    }
+
+    if (pet.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: "No tienes permiso para modificar esta mascota" });
+    }
+
+    pet.photos = pet.photos.filter((photo) => photo !== photoUrl);
+
+    await pet.save();
+
+    res.json(pet);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al eliminar la foto" });
+  }
+};
