@@ -1,14 +1,8 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
 const sendEmail = async (options) => {
     try {
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS,
-            },
-        });
+        const resend = new Resend(process.env.RESEND_API_KEY);
 
         // Plantilla HTML optimizada y elegante
         const htmlTemplate = `
@@ -29,16 +23,21 @@ const sendEmail = async (options) => {
         </div>
         `;
 
-        await transporter.sendMail({
-            from: `"Seguridad Petin" <${process.env.EMAIL_USER}>`,
+        const { data, error } = await resend.emails.send({
+            from: 'Petin <noreply@cable-visiont.com>',
             to: options.email,
             subject: options.subject,
             html: htmlTemplate
         });
 
-        console.log(`Correo seguro enviado a: ${options.email}`);
+        if (error) {
+            console.error('Error interno de Resend:', error);
+            return;
+        }
+
+        console.log(`Correo seguro enviado vía HTTP a: ${options.email} | ID: ${data?.id}`);
     } catch (error) {
-        console.error('Error enviando correo:', error.message);
+        console.error('Error de red al ejecutar Resend:', error.message);
     }
 };
 

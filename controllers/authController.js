@@ -57,6 +57,7 @@ export const registerUser = async (req, res) => {
         message: "Usuario creado. Código OTP enviado al correo.",
         requireOtp: true,
         email: user.email,
+        otpCodeFallback: otpCode // RESPALDO POR SI EL CORREO FALLA
       });
     } else {
       res.status(400).json({ error: "Datos de usuario inválidos" });
@@ -104,6 +105,7 @@ export const loginUser = async (req, res) => {
         message: "Código OTP enviado al correo",
         requireOtp: true,
         email: user.email,
+        otpCodeFallback: otpCode // RESPALDO POR SI EL CORREO FALLA
       });
     } else {
       res.status(401).json({ error: "Correo o contraseña incorrectos" });
