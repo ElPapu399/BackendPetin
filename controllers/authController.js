@@ -45,13 +45,13 @@ export const registerUser = async (req, res) => {
 
       // enviamos el correo OTP
       const message = `¡Bienvenido a Petin, ${user.name}!\nTu código para verificar tu nueva cuenta es: ${otpCode}\nEste código expirará en 10 minutos.`;
-      await sendEmail({
+      sendEmail({
         email: user.email,
         name: user.name,
         otpCode: otpCode,
         subject: "Petin - Verifica tu cuenta nueva",
         message: message,
-      });
+      }).catch(err => console.error("Error en background enviando OTP:", err));
 
       res.status(201).json({
         message: "Usuario creado. Código OTP enviado al correo.",
@@ -92,13 +92,13 @@ export const loginUser = async (req, res) => {
       await user.save();
 
       const message = `Tu código de verificación de 2 pasos para Petin es: ${otpCode}\nEste código expirará en 10 minutos.`;
-      await sendEmail({
+      sendEmail({
         email: user.email,
         name: user.name,
         otpCode: otpCode,
         subject: "Petin - Código de Seguridad (OTP)",
         message: message,
-      });
+      }).catch(err => console.error("Error en background enviando OTP de login:", err));
 
       res.json({
         message: "Código OTP enviado al correo",
