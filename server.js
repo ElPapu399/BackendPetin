@@ -7,6 +7,8 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import Message from './models/Message.js';
 import { cleanText } from './utils/textFilter.js';
+import helmet from 'helmet';
+import compression from 'compression';
 
 import petRoutes from './routes/pets.js';
 import authRoutes from './routes/auth.js';
@@ -20,6 +22,10 @@ connectDB();
 
 const app = express();
 const port = process.env.PORT || 3005;
+
+// Middlewares de Seguridad y Optimización (Grado Producción)
+app.use(helmet());      // Oculta vulnerabilidades en las cabeceras HTTP
+app.use(compression()); // Comprime los datos enviados al cliente usando GZIP
 
 //expreess
 const httpServer = createServer(app);

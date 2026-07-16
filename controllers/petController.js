@@ -200,7 +200,7 @@ export const addPhotos = async(req, res) => {
 
     const newPhotos = req.files.map((file) => file.path);
 
-    if(pet.photos.length + newPhotos.lenght > 4) {
+    if(pet.photos.length + newPhotos.length > 4) {
       return res.status(400).json({
         error: "Solo puedes tener un máximo de 3 fotos.",
       });
